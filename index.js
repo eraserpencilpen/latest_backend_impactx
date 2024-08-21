@@ -1,9 +1,8 @@
-/*
 const express = require('express');
-const { verifyToken } = require('./auth');
+const { verifyToken } = require('./path/to/serviceAccountKey.json');
 const admin = require('firebase-admin');
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 65000;
 app.use(express.json());
 // Endpoint for user registration
 app.post('/register', async (req, res) => {
@@ -49,10 +48,19 @@ app.use(async (req, res, next) => {
 app.get('/profile', (req, res) => {
     res.send(`Hello ${req.user.email}`);
 });
+
+
+app.get("/",(req,res)=>{
+    res.send("Hello. this is working!")
+})
+// Protected route example
+app.get('/profile', (req, res) => {
+    res.send(`Hello ${req.user.email}`);
+});
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
-*/
+
 
 const Farmer = require('./farmer');
 const Customer = require('./customer');
