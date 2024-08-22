@@ -1,5 +1,5 @@
 const bcrypt = require('bcrypt');
-const { db } = require('./path/to/firebase'); // Ensure you have initialized Firestore
+const { db } = require('./path/to/firebase.js'); // Ensure you have initialized Firestore
 
 class User {
     constructor(userID, name, contactNumber, email, password) {
