@@ -4,10 +4,11 @@ const sqlite3 = require("sqlite3").verbose();
 const admin = require('firebase-admin');
 const app = express();
 const cors = require('cors');
-
+const bodyParser = require('body-parser');
 app.use(cors());
 const PORT = process.env.PORT || 8080;
 app.use(express.json());
+
 // Endpoint for user registration
 app.post('/register', async (req, res) => {
     const { email, password } = req.body;
@@ -34,21 +35,7 @@ app.post('/login', async (req, res) => {
         res.status(400).send(error.message);
     }
 });
-// // Middleware to protect routes
-// app.use(async (req, res, next) => {
-//     const token = req.headers.authorization?.split(' ')[1];
-//     if (token) {
-//         try {
-//             req.user = await verifyToken(token);
-//             next();
-//         } catch (error) {
-//             res.status(401).send('Unauthorized');
-//         }
-//     } else {
-//         res.status(401).send('Unauthorized');
-//     }
-// });
-// Protected route example
+
 app.get('/profile', (req, res) => {
     res.send(`Hello ${req.user.email}`);
 });
@@ -67,16 +54,66 @@ app.get("/inventory", async (req,res)=>{
     
 })
 
+
 // Protected route example
 app.get('/profile', (req, res) => {
     res.send(`Hello ${req.user.email}`);
 });
+
+
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server is running on port ${PORT}`);
 });
 
-// only one farmer that is Mark
-// only one user that is Ming
+// push request when at upload page
+app.post('/profile/UploadGoods', (req,res) =>{
+    const sqlite3 = require("sqlite3");
+    const db = new sqlite3.Database('./orders.db');
+    const goodsData = req.body;
+    console.log(goodsData);
+    const {goodsName,goods_Quantity,goods_Price} = goodsData;
+
+    // write to database
+    const sql = `INSERT INTO INVENTORY (goods_name, goods_quantity, goods_price) VALUES (?, ?, ?)`;
+
+    db.all(sql,[goodsName, goods_Quantity, goods_Price], (err,result) => {
+        if (err) {
+            console.error(err);
+            res.status(500).send(`ERROR UPLOADING GOODS`);
+            return;
+        }
+        console.log(result);
+        res.status(200).send('GOODS UPLOADED SUCCESFULLY');
+    });
+
+    db.close();
+});
+
+// logic : from goods page, parse goods name, quantity, into json , upload into orders.db orders table, 
+app.post('/profile/OrderGoods', (req,res) => {
+    const sqlite3 = require("sqlite3");
+    const db = new sqlite3.Database('./orders.db');
+    const OrderData = req.body;
+    console.log(OrderData)
+    const {goodsName, OrderedQuantity, OrderPrice, OrderDate} = OrderData;
+    // write to database
+    const sql = `INSERT INTO ORDERS (goods_name, order_date, goods_quantity, goods_price) VALUES (?, ?, ?, ?)`;
+    // insert data to database
+    db.all(sql, [goodsName, OrderedQuantity, OrderPrice, OrderDate],(err,result) => {
+        if (err) {
+            console.error(err, result);
+            res.status(500).send('ERROR SAVING ORDER');
+            return;
+        }
+        console.log(result);
+        res.status(200).send('GOODS UPLOADED SUCCESFULLY');
+    });
+
+    db.close();
+
+});
+
+
 async function fetch_db() {
     return new Promise((resolve,reject)=>{
         const db = new sqlite3.Database('./orders.db');
@@ -114,7 +151,7 @@ function init_db(){
     goods_name VARCHAR(255),
     order_date VARCHAR(255),
     goods_quantity VARCHAR(255),
-    goods_price VARCHAR(255),
+    goods_price TEXT,
     PRIMARY KEY(id AUTOINCREMENT)
     )`;
     // db.run(sql)
@@ -165,18 +202,4 @@ function populate_db(){
     db.run(sql);
 }
 
-
-fetch_db();
-
-
-// const Farmer = require('./farmer');
-// const Customer = require('./customer');
-
-// // Example Usage
-// const farmer = new Farmer("farmer1", "John Doe", "1234567890", "john.doe@farm.com", "securepassword", "Farm Location", "9am - 5pm");
-// farmer.save();
-
-// const customer = new Customer("customer1", "Jane Smith", "9876543210", "jane.smith@shop.com", "securepassword", 100);
-// customer.save();
-
-console.log("index.js has run with no problems.")
+console.log("index.js has run with no problems.");
