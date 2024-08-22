@@ -1,11 +1,12 @@
 const express = require('express');
 const { verifyToken } = require('./path/to/serviceAccountKey.json');
+const sqlite3 = require("sqlite3").verbose();
 const admin = require('firebase-admin');
 const app = express();
 const cors = require('cors');
 const bodyParser = require('body-parser');
 app.use(cors());
-const PORT = process.env.PORT || 65000;
+const PORT = process.env.PORT || 8080;
 app.use(express.json());
 
 // Endpoint for user registration
@@ -42,8 +43,17 @@ app.get('/profile', (req, res) => {
 
 app.get("/",(req,res)=>{
     res.send("Hello. this is working!")
-    console.log("response sent.")
 })
+app.get("/inventory", async (req,res)=>{
+    try {
+        const data = await fetch_db();
+        res.send(data);
+    } catch (err) {
+        res.status(500).send("Error retrieving data from the database.");
+    }
+    
+})
+
 
 // Protected route example
 app.get('/profile', (req, res) => {
@@ -104,9 +114,37 @@ app.post('/profile/OrderGoods', (req,res) => {
 });
 
 
+async function fetch_db() {
+    return new Promise((resolve,reject)=>{
+        const db = new sqlite3.Database('./orders.db');
+        sql = "SELECT * FROM inventory";
+        db.all(sql,(err,rows)=>{
+            if (err){
+                reject(err);
+            }
+            else{
+                resolve(rows);
+            }
+            
+    });
+    })
+    
+    // return db.all(sql);
+
+}
+function test_db(){
+    const sqlite3 = require("sqlite3");
+    const db = new sqlite3.Database('./test.db');
+    // sql = "CREATE TABLE test (id int, name TEXT);";
+    sql = "SELECT name FROM test";
+    
+    db.all(sql,(err,rows)=>{
+        console.log(rows);
+    });
+}
+
 
 function init_db(){
-    const sqlite3 = require("sqlite3");
     const db = new sqlite3.Database('./orders.db');
     sql = `CREATE TABLE orders (
     id INTEGER,
@@ -141,7 +179,6 @@ function init_db(){
 }
 
 function populate_db(){
-    const sqlite3 = require("sqlite3");
     const db = new sqlite3.Database('./orders.db');
 
     sql = `
